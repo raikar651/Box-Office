@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import MainPageLayout from '../components/MainPageLayout';
 import { apiGet } from '../misc/config';
 import ShowGrid from '../components/show/ShowGrid';
@@ -11,6 +11,21 @@ import {
 } from './Home.styled';
 
 import CustomRadio from '../components/CustomRadio';
+const renderResults = results => {
+  if (results && results.length === 0) {
+    return <div>No results</div>;
+  }
+
+  if (results && results.length > 0) {
+    return results[0].show ? (
+      <ShowGrid data={results} />
+    ) : (
+      <ActorGrid data={results} />
+    );
+  }
+
+  return null;
+};
 
 const Home = () => {
   const [input, setInput] = useLastQuery();
@@ -18,29 +33,22 @@ const Home = () => {
   const [searchOption, setSearchOption] = useState('shows');
 
   const isShowsSearch = searchOption === 'shows';
-
   // const onSearch = () => {
-  //   fetch(`https://api.tvmaze.com/search/shows?q=${input}`)
-  //     .then(r => r.json())
-  //     .then(result => {
-  //       console.log(result);
-  //     });
+  //   apiGet(`/search/${searchOption}?q=${input}`).then(result => {
+  //     setResults(result);
+  //   });
   // };
-
-  // const onSearch = async () => {
-  //   const res = await fetch(`https://api.tvmaze.com/search/shows?q=${input}`);
-  //   const acutalres = await res.json();
-  //   console.log(acutalres);
-  // };
-
   const onSearch = async () => {
     const r = await apiGet(`/search/${searchOption}?q=${input}`);
     setResults(r);
   };
 
-  const onInputChange = ev => {
-    setInput(ev.target.value);
-  };
+  const onInputChange = useCallback(
+    ev => {
+      setInput(ev.target.value);
+    },
+    [setInput]
+  );
 
   const onKeyDown = ev => {
     if (ev.keyCode === 13) {
@@ -48,34 +56,20 @@ const Home = () => {
     }
   };
 
-  const onRadioChange = ev => {
+  const onRadioChange = useCallback(ev => {
     setSearchOption(ev.target.value);
-  };
-
-  const renderResults = () => {
-    if (results && results.length === 0) {
-      return <div>No results</div>;
-    }
-
-    if (results && results.length > 0) {
-      return results[0].show ? (
-        <ShowGrid data={results} />
-      ) : (
-        <ActorGrid data={results} />
-      );
-    }
-
-    return null;
-  };
+  }, []);
 
   return (
     <MainPageLayout>
       <SearchInput
         type="text"
+        placeholder="Search for something"
         onChange={onInputChange}
         onKeyDown={onKeyDown}
         value={input}
       />
+
       <RadioInputsWrapper>
         <div>
           <CustomRadio
@@ -103,7 +97,7 @@ const Home = () => {
           Search
         </button>
       </SearchButtonWrapper>
-      {renderResults()}
+      {renderResults(results)}
     </MainPageLayout>
   );
 };
